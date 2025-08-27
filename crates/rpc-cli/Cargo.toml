@@ -1,0 +1,17 @@
+[package]
+name = "rpc-cli"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "rpc-cli"
+path = "src/main.rs"
+
+[dependencies]
+rpc-core = { path = "../rpc-core" }
+rpc-client = { path = "../rpc-client" }
+rpc-server = { path = "../rpc-server" }
+tokio = { workspace = true }
+clap = { version = "4.0", features = ["derive"] }
+serde_json = "1.0"
+anyhow = { workspace = true }

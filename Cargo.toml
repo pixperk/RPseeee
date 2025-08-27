@@ -1,0 +1,17 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/rpc-core",
+    "crates/rpc-client", 
+    "crates/rpc-server",
+    "crates/rpc-cli"
+]
+
+# Shared dependencies across workspace
+[workspace.dependencies]
+serde = { version = "1.0", features = ["derive"] }
+tokio = { version = "1.0", features = ["full"] }
+anyhow = "1.0"
+thiserror = "1.0"
+serde_json = "1.0"
+clap = { version = "4.0", features = ["derive"] }
