@@ -1,6 +1,9 @@
 use rpc_core::framing::{read_frame, write_frame};
 use tokio::net::{TcpListener, TcpStream};
 
+pub mod registry;
+pub mod handler;
+
 pub struct Server {
     listen_addr: String,
 }

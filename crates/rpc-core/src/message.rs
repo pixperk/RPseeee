@@ -14,12 +14,13 @@ pub struct  Message{
     version :  u8,
     message_type : MessageType,
     request_id : u64,
+    method : String,
     payload : Vec<u8>
 }
 
-pub fn new_message(message_type : MessageType, request_id : u64, payload : &str) -> Message{
+pub fn new_message(message_type : MessageType, request_id : u64, method: String, payload : &str) -> Message{
     let byte_payload = payload.as_bytes().to_vec();
-    Message { version: DEFAULT_VERSION, message_type, request_id, payload: byte_payload }
+    Message { version: DEFAULT_VERSION, message_type, request_id, method, payload: byte_payload }
 }
 
 impl Message{
