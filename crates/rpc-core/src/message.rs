@@ -28,4 +28,12 @@ impl Message{
         let payload_str = std::str::from_utf8(&self.payload)?;
         Ok(payload_str)
     }
+
+    pub fn get_method(&self) -> &str {
+        &self.method
+    }
+
+    pub fn get_request_id(&self) -> u64 {
+        self.request_id
+    }
 }

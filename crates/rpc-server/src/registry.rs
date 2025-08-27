@@ -3,7 +3,7 @@ use std::{collections::HashMap, sync::Arc};
 use crate::handler::Handler;
 
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Registry {
     handlers : HashMap<String, Arc<dyn Handler>>
 }

@@ -26,11 +26,10 @@ impl Client{
         self.stream = Some(stream);
         Ok(())
     }
-    pub async fn send_msg(&mut self, msg : Message) -> anyhow::Result<()> {
+     pub async fn send_msg(&mut self, msg : Message) -> anyhow::Result<Message> {
         let stream = self.stream.as_mut().ok_or_else(|| anyhow::anyhow!("Not connected to server"))?;
         write_frame(stream, &msg).await?;
         let received_msg = read_frame(stream).await?;
-        println!("received msg {:?}", received_msg);
-        Ok(())
+        Ok(received_msg)
     }
 }
