@@ -1,33 +1,43 @@
 use rpc_server::{handler::Handler, new_server};
-use serde::Deserialize;
+use rpc_core::rpc::{RpcRequest, RpcResponse};
 use std::sync::Arc;
-
-#[derive(Deserialize)]
-
 
 struct HelloHandler;
 
 #[async_trait::async_trait]
-impl Handler for HelloHandler{
-    async fn handle(&self, payload : &[u8]) -> Vec<u8>{
-        //convert payload to string
-        let request_str = String::from_utf8_lossy(payload);
-        //create response
-        let response = format!("Hello, {}!", request_str);
-        response.into_bytes()
+impl Handler for HelloHandler {
+    async fn handle(&self, request: RpcRequest) -> RpcResponse {
+        let name = request.get_raw_params();
+        let response = format!("Hello, {}!", name.trim());
+        
+        RpcResponse::success(serde_json::Value::String(response))
+    }
+}
+
+struct EchoHandler;
+
+#[async_trait::async_trait]
+impl Handler for EchoHandler {
+    async fn handle(&self, request: RpcRequest) -> RpcResponse {
+        let message = request.get_raw_params();
+        let response = format!("Echo: {}", message);
+        
+        RpcResponse::success(serde_json::Value::String(response))
     }
 }
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let mut server = new_server("127.0.0.1:8080".to_owned());
+
     
-    // Register the weather handler
+    // Register handlers
     server.register_handler("hello".to_string(), Arc::new(HelloHandler));
+    server.register_handler("echo".to_string(), Arc::new(EchoHandler));
     
-    println!("Hello RPC Server starting on 127.0.0.1:8080");
-    println!("Send requests with method 'hello' and your name as payload");
-    
+    println!("RPC Server starting on 127.0.0.1:8080");
+    println!("Available methods: hello, echo");
+
     server.start().await
 }
 

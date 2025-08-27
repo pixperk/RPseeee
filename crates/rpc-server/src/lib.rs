@@ -49,25 +49,71 @@ impl Server {
 
     async fn handle_client(registry: Registry, stream: &mut TcpStream) -> anyhow::Result<()> {
         loop {
-            let req = read_frame(stream).await?;
-            let req_method = req.get_method();
-            if let Some(handler) = registry.get_handler(req_method){
-                let payload = req.get_payload_as_str()?;
-                let response_payload = handler.handle(payload.as_bytes()).await;
+            let message = read_frame(stream).await?;
+            let method = message.get_method();
+            
+            if let Some(handler) = registry.get_handler(method) {
+                let rpc_request = match message.get_payload_as_str() {
+                    Ok(payload_str) => {
+                        // Try to parse payload as JSON first
+                        match serde_json::from_str::<serde_json::Value>(payload_str) {
+                            Ok(json_value) => {
+                                // If it's valid JSON, use it as params
+                                rpc_core::rpc::RpcRequest::new(
+                                    method.to_string(),
+                                    json_value
+                                )
+                            }
+                            Err(_) => {
+                                // If not valid JSON, treat as simple string
+                                rpc_core::rpc::RpcRequest::new(
+                                    method.to_string(),
+                                    serde_json::Value::String(payload_str.to_string())
+                                )
+                            }
+                        }
+                    }
+                    Err(_) => {
+                        let error_response = rpc_core::message::new_message(
+                            rpc_core::message::MessageType::Error,
+                            message.get_request_id(),
+                            method.to_string(),
+                            "Invalid payload encoding"
+                        );
+                        write_frame(stream, &error_response).await?;
+                        continue;
+                    }
+                };
                 
-                let response = rpc_core::message::new_message(
-                    rpc_core::message::MessageType::Response,
-                    req.get_request_id(),
-                    req_method.to_string(),
-                    &String::from_utf8_lossy(&response_payload)
+                // Call handler with RpcRequest
+                let rpc_response = handler.handle(rpc_request).await;
+                
+                // Convert RpcResponse back to message
+                let (message_type, payload) = match rpc_response.result {
+                    Ok(result) => (
+                        rpc_core::message::MessageType::Response,
+                        result.to_string()
+                    ),
+                    Err(error) => (
+                        rpc_core::message::MessageType::Error,
+                        error.to_string()
+                    ),
+                };
+                
+                let response_message = rpc_core::message::new_message(
+                    message_type,
+                    message.get_request_id(),
+                    method.to_string(),
+                    &payload
                 );
                 
-                write_frame(stream, &response).await?;
+                write_frame(stream, &response_message).await?;
             } else {
+                // Method not found
                 let error_response = rpc_core::message::new_message(
                     rpc_core::message::MessageType::Error,
-                    req.get_request_id(),
-                    req_method.to_string(),
+                    message.get_request_id(),
+                    method.to_string(),
                     "Method not found"
                 );
                 write_frame(stream, &error_response).await?;

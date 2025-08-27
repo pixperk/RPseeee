@@ -4,7 +4,6 @@ members = [
     "crates/rpc-core",
     "crates/rpc-client", 
     "crates/rpc-server",
-    "crates/rpc-cli"
 ]
 
 # Shared dependencies across workspace

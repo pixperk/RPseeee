@@ -1,26 +1,38 @@
 use rpc_client::new_client;
-use rpc_core:: message::{new_message, MessageType};
-use std::io::{self, Write};
+use serde_json::json;
 
 #[tokio::main]
 pub async fn main() -> anyhow::Result<()>{
     let mut client = new_client("127.0.0.1:8080".to_owned());
     
-    
-    print!("Enter your name: ");
-    io::stdout().flush()?; 
-    
-    let mut input = String::new();
-    io::stdin().read_line(&mut input)?;
-    let name = input.trim(); 
-    
-    let msg = new_message(MessageType::Request, 42069, "hello".to_owned(), name);
-
     client.connect_to_server().await?;
-    println!("connected to server on addr : 127.0.0.1:8080");
-    println!("requesting hello for: {}", name);
-    let response = client.send_msg(msg).await?;
-    println!("hello response : {:?}", response.get_payload_as_str()?);
+    println!("Connected to server on 127.0.0.1:8080");
+    println!();
 
+    println!("Test 1: Simple hello with string");
+
+    let name = "World";
+
+    let response = client.call_simple("hello", name).await?;
+    println!("Response: {}", response);
+    println!();
+
+    println!("Test 2: Hello with JSON object");
+    let response = client.call_json("hello", json!({"name": name})).await?;
+    println!("Response: {}", response);
+    println!();
+
+    println!("Test 3: Echo with string");
+    let message = "This is a test message.";
+    let response = client.call_simple("echo", message).await?;
+    println!("Response: {}", response);
+    println!();
+
+    println!("Test 4: Echo with JSON object");
+    let response = client.call_json("echo", json!({"message": message})).await?;
+    println!("Response: {}", response);
+    println!();
+
+    println!("\nAll tests completed!");
     Ok(())
 }
